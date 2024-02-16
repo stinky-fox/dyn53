@@ -2,7 +2,7 @@
 Dynamic DNS using Route 53 
 
 # .config.json sample 
-
+```
 {
     "aws": {
         "aws_access_key": "ABCDE",
@@ -11,3 +11,4 @@ Dynamic DNS using Route 53
         "aws_r53_name": "sub.example.com"
     }
 }
+```
