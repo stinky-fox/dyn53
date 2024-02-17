@@ -4,6 +4,9 @@ Dynamic DNS using Route 53
 # .config.json sample 
 ```
 {
+     "system": {
+        "check_timeout" : 300
+    },
     "aws": {
         "aws_access_key": "ABCDE",
         "aws_secret_key": "QWERTY",
