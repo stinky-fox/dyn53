@@ -20,7 +20,7 @@ class My_IP:
         response = get(url=url)
 
         if response.status_code == 200:
-             self.ip_addr = response.content.decode('utf-8').split('\n')[0]
+             self.current_ip = response.content.decode('utf-8').split('\n')[0]
         else:
             print(f"Error checking IP, error code")
 
