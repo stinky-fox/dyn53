@@ -5,7 +5,6 @@
 
 ## import libs
 from json import load 
-from os import environ
 from sys import exit
 from boto3 import client
 
@@ -13,6 +12,10 @@ from boto3 import client
 class AWS_API:
 
     def __init__(self):
+
+        # General status of AWS API config
+
+        self.aws_api_configured = None
 
         # aws api authentication settings
         self.aws_access_key = None
@@ -30,68 +33,28 @@ class AWS_API:
     # Get config function
     def get_config(self, **kwargs):
         """
-        Set AWS configuration
+        Open configuration JSON file and look for AWS-related configuration. 
         """
         
-        # define sub functions
+        config_file = kwargs['config_file']
 
-        def process_envs():
-            """
-            Used as a backup function when configuration file is missing. Takes config from environment variables
-            """
-            try:
-                self.aws_access_key = environ['AWS_ACCESS_KEY']
-                self.aws_secret_key = environ['AWS_SECRET_KEY']
-                self.aws_r53_zone_id = environ['AWS_R53_ZONE_ID']
-                self.aws_r53_name = environ['AWS_R53_NAME']
-                result = True
+        try:
+            with open(config_file, 'r') as cfg_file:
+                cfg = load(cfg_file)
+                aws_cfg = cfg['aws']
+                self.aws_access_key = aws_cfg['aws_access_key']
+                self.aws_secret_key = aws_cfg['aws_secret_key']
+                self.aws_r53_zone_id = aws_cfg['aws_r53_zone_id']
+                self.aws_r53_name = str(aws_cfg['aws_r53_name'] + '.')
+                print("AWS R53 configured")
+                self.aws_api_configured = True
 
-            except KeyError as error:
-                print(f'Unable to extract {error} from the env variables. Not defined!')
-                result = False
-            
-            finally:
-                return result
-
-        def read_cfg_file(config_file):
-            """
-            Open configuration JSON file and look for AWS-related configuration. 
-            """
-            try:
-                with open(config_file, 'r') as cfg_file:
-                    cfg = load(cfg_file)
-                    aws_cfg = cfg['aws']
-                    self.aws_access_key = aws_cfg['aws_access_key']
-                    self.aws_secret_key = aws_cfg['aws_secret_key']
-                    self.aws_r53_zone_id = aws_cfg['aws_r53_zone_id']
-                    self.aws_r53_name = str(aws_cfg['aws_r53_name'] + '.')
-                    result = True
-
-                    
-            except (FileNotFoundError, ValueError) as error:
-                print(f'Processing of {kwargs["config_file"]} ended up with: {error}')
-                result = False
-    
-            finally:
-                return result
-
-        # call functions
-
-        if 'config_file' in kwargs:
-            print(f'Trying to use {kwargs["config_file"]} first')
-            result_file = read_cfg_file(kwargs['config_file'])
-
-            if not result_file:
-                print(f'Configuration file result is {result_file}. Trying envs')
-                result_env = process_envs()
-        else:
-            result_file = False
-            result_env = process_envs
-        
-        if not result_file and not result_env:
+                
+        except (FileNotFoundError, ValueError) as error:
+            print(f'Processing of {kwargs["config_file"]} ended up with: {error}')
             print('Skipping AWS confugration...')
-        else:
-            print("AWS R53 configured")
+            self.aws_api_configured = False
+            
 
     # Read current record function
     def aws_get_current_ip(self, **kwargs):

@@ -37,6 +37,10 @@ COPY requirements.txt /install
 
 RUN pip3 install -r /install/requirements.txt
 
+# remove anything from /install folder
+
+RUN rm -rf /install
+
 # copy Python files
 COPY *.py /app/
 
