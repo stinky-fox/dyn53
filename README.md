@@ -15,3 +15,5 @@ Dynamic DNS using Route 53
     }
 }
 ```
+# Docker Repo
+Docker Image can be pulled from this [Docker repository](https://hub.docker.com/repository/docker/puffago/dyn53/general)
