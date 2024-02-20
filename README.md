@@ -1,5 +1,5 @@
-# dyn53
-Dynamic DNS using Route 53 
+# ddchimp
+Multi-Cloud Dynamic DNS
 
 # .config.json sample 
 ```
@@ -16,4 +16,4 @@ Dynamic DNS using Route 53
 }
 ```
 # Docker Repo
-Docker Image can be pulled from this [Docker repository](https://hub.docker.com/r/puffago/dyn53)
+Docker Image can be pulled from this [Docker repository](https://hub.docker.com/r/puffago/ddchimp)
