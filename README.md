@@ -12,6 +12,12 @@ Multi-Cloud Dynamic DNS
         "aws_secret_key": "QWERTY",
         "aws_r53_zone_id": "Z0121231",
         "aws_r53_name": "sub.example.com"
+    },
+    "cflr": {
+        "cflr_email_address": "email@example.com,
+        "cflr_api_key": "SECRET_KEY",
+        "cflr_zone_id": "524cb4zoneid",
+        "cflr_fqdn_name": "sub.example.tld"
     }
 }
 ```
