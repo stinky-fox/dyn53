@@ -1,93 +1,79 @@
-from os import environ, path
+from sys import exit
 from time import sleep
-from json import load
-from aws import AWS_API
-from ip_handler import My_IP
 from datetime import datetime
+from ip_handler import My_IP
+from aws import AWS_API
+from cloudflare import Cflr_API
+from misc import verify_address, sysconfig_loader, config_file_resolver, service_discoverer
 
 ### global default vars
 
 EXIT_TIMEOUT = 120
 DEFAULT_CONFIG_FILE = '.config.json'
 
-### functions
 
-def verify_address(old_ip, new_ip):
+############################ main code ##########################################
 
-    if old_ip == new_ip:
-        return True
-    else:
-        return False
+try:
+    config_file = config_file_resolver(default_config_file=DEFAULT_CONFIG_FILE)
 
-def sysconfig_loader(config_file):
+    services = service_discoverer(config_file=config_file)
+    print('Configured services: ', *(services))
 
-    timeout = 300
-    try:
-        with open(config_file, 'r') as cfg:
-            config = load(cfg)
-            timeout = config['system']['timeout']
+    timeout = sysconfig_loader(config_file=config_file)
+    print('Configured timeout: ', timeout, 'seconds')
 
-    except (FileNotFoundError, ValueError) as error:
-        # if error - return default to 5m (300s)
-        print(f'Opening config file had errored out with an error: {error}')
-    
-    finally:
-        return timeout
-
-def config_file_resolver():
-
-    try:
-        config_file = environ['CONFIG_FILE']
-        if path.isfile(config_file):
-            return config_file
-        else:
-            raise FileNotFoundError
-
-    except (KeyError, FileNotFoundError):
-        config_file = DEFAULT_CONFIG_FILE
-        print(f"Config file is not defined, falling back to defaults {config_file}")
-        if path.isfile(config_file):
-            return config_file
-        else:
-            return False
-
-### main code
-
-config_file = config_file_resolver()
-
-if not config_file:
+except FileNotFoundError as error:
     print(f"Failed to locate configuration file, exiting in {EXIT_TIMEOUT} seconds")
     sleep(EXIT_TIMEOUT)
     exit(1)
 
-else:
-    my_ip = My_IP()
-    aws_api = AWS_API()
-    aws_api.get_config(config_file=config_file)
-    timeout = sysconfig_loader(config_file=config_file)
+# configure services
+dns_provider = {}
 
+for index, service in enumerate(services):
+    if service == 'aws':
+        dns_provider[service] = AWS_API()
+        dns_provider[service].get_config(config_file=config_file)
+
+        if not dns_provider[service].aws_api_configured:
+            services.pop()[index]
+
+    elif service == 'cflr':
+        dns_provider[service] = Cflr_API()
+        dns_provider[service].get_config(config_file=config_file)
+
+        if not dns_provider[service].cflr_api_configured:
+            services.pop()[index]
+
+
+# check if any service configured, otherwise terminate
+if len(services) > 0:
+    my_ip = My_IP()
     counter = 0
 
-    if aws_api.aws_api_configured:
-        while True:
+    # start configuration loop
+    while True:
 
-            if counter != 0:
-                sleep(timeout)
+        if counter != 0:
+            sleep(timeout)
+        
+        my_ip.get_ip()
 
-            my_ip.get_ip()
-            aws_api.aws_get_current_ip()
-
-            validation_status = verify_address(old_ip=aws_api.current_ip, new_ip=my_ip.current_ip)
-
+        for service in services: 
+            
+            dns_provider[service].get_current_ip()
+            validation_status = verify_address(old_ip=dns_provider[service].current_ip, new_ip=my_ip.current_ip)
             dtnow = datetime.now()
+
             if not validation_status:
                 print(f'{dtnow} : Addreses are different. Changing to {my_ip.current_ip}')
-                aws_api.aws_set_new_ip(new_ip=my_ip.current_ip)
+                dns_provider[service].set_new_ip(new_ip=my_ip.current_ip)
             else:
                 print(f'{dtnow} : Addresses are the same, no need to update!')
             
-            counter+=1
-    else: 
-        print(f'AWS API not configured, exiting in {EXIT_TIMEOUT} seconds')
-        sleep(EXIT_TIMEOUT)
-        exit(1)
+        counter+=1
+else: 
+    print(f'No service is configured, exiting in {EXIT_TIMEOUT} seconds')
+    sleep(EXIT_TIMEOUT)
+    exit(1)

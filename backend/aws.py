@@ -57,7 +57,7 @@ class AWS_API:
             
 
     # Read current record function
-    def aws_get_current_ip(self, **kwargs):
+    def get_current_ip(self, **kwargs):
         """
         Function receives current value of the R53 record and sets it as self.current_ip value
         """
@@ -79,7 +79,7 @@ class AWS_API:
 
         
     # Update record with new data
-    def aws_set_new_ip(self, new_ip):
+    def set_new_ip(self, new_ip):
         """
         Function to supply record with the new IP addr.
         """
@@ -119,6 +119,6 @@ if __name__ == '__main__':
 
     aws_api = AWS_API()
     aws_api.get_config(config_file='.config.json')
-    aws_api.aws_get_current_ip()
-    aws_api.aws_set_new_ip(new_ip='123.123.123.123')
+    aws_api.get_current_ip()
+    aws_api.set_new_ip(new_ip='123.123.123.123')
 
